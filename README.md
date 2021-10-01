@@ -1,27 +1,26 @@
 ![Thanos](https://img.shields.io/badge/Prometheus-Thanos-blueviolet)
 
 # Thanos
-Thanos is a set of components that can be composed into a highly available metric system with unlimited storage capacity, which can be added seamlessly on top of existing Prometheus deployments.
+Thanos é um conjunto de componentes que podem ser compostos em um sistema métrico de alta disponibilidade com capacidade de armazenamento ilimitada, que pode ser adicionado perfeitamente nas implantações existentes do Prometheus.
 
-Thanos is a CNCF Incubating project.
+Thanos é um projeto de incubação CNCF .
 
-Thanos leverages the Prometheus 2.0 storage format to cost-efficiently store historical metric data in any object storage while retaining fast query latencies. Additionally, it provides a global query view across all Prometheus installations and can merge data from Prometheus HA pairs on the fly.
+Thanos aproveita o formato de armazenamento do Prometheus 2.0 para armazenar dados métricos históricos de maneira econômica em qualquer armazenamento de objeto enquanto retém latências de consulta rápidas. Além disso, ele fornece uma visualização de consulta global em todas as instalações do Prometheus e pode mesclar dados de pares HA do Prometheus instantaneamente.
 
-Concretely the aims of the project are:
+Concretamente, os objetivos do projeto são:
 
- - Global query view of metrics.
- - Unlimited retention of metrics.
- - High availability of components, including Prometheus.
+Visualização de consulta global de métricas.
+Retenção ilimitada de métricas.
+Alta disponibilidade de componentes, incluindo Prometheus.
 
-**References:**https://github.com/thanos-io/thanos
+**Referências:**https://github.com/thanos-io/thanos
 
 ---
-# Requirements Infra
+# Raquisitos mínimos para POC
  - Docker
  - Cluster Prometheus
  - Multi Cloud
  - Bucket Cloud
-
 
 ## Configuração inicial do Prometheus
 **Etapa 1** - Iniciar os servidores Prometheus iniciais
