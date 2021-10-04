@@ -171,9 +171,9 @@ O Sidecar, como o nome sugere, deve ser implantado junto com o Prometheus. Sidec
 - É capaz de observar a configuração e as regras do Prometheus (alerta ou gravação) e notificar o 
 Prometheus para recarregamentos dinâmicos:
 
-- opcionalmente, substitua por variáveis ​​de ambiente
+- Opcionalmente, substitua por variáveis ​​de ambiente
 
-- opcionalmente descompactar se gzipp-ed
+- Opcionalmente descompactar se gzipp-ed
 Você pode ler mais sobre sidecar [aqui](https://thanos.io/tip/components/sidecar.md/)
 
 ## Instalação
@@ -356,9 +356,9 @@ Você deve ver o valor único que representa o número de séries removidas em a
 
 Se consultarmos prometheus_tsdb_head_series, veremos que temos informações completas sobre todas as três instâncias do Prometheus:
 ~~~txt
-prometheus_tsdb_head_series{cluster="eu1",instance="127.0.0.1:9090",job="prometheus"}
-prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9091",job="prometheus"}
-prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9092",job="prometheus"}
+prometheus_tsdb_head_series{cluster="prometheus-node1",instance="127.0.0.1:9091",job="prometheus"}
+prometheus_tsdb_head_series{cluster="prometheus-node2",instance="127.0.0.1:9092",job="prometheus"}
+prometheus_tsdb_head_series{cluster="prometheus-node3",instance="127.0.0.1:9093",job="prometheus"}
 ~~~
 
 ## Manuseio de Prometheus Altamente Disponível
@@ -370,10 +370,10 @@ Tente consultar a mesma consulta de antes: prometheus_tsdb_head_series
 Agora desligue a desduplicação ( deduplicationbotão na IU do Consultor) e pressione Executenovamente. Agora você deve ver 5 resultados:
 
 ~~~txt
-prometheus_tsdb_head_series{cluster="eu1",instance="127.0.0.1:9090",job="prometheus",replica="0"}
-prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9091",job="prometheus",replica="0"}
-prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9091",job="prometheus",replica="1"}
-prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9092",job="prometheus",replica="0"}
+prometheus_tsdb_head_series{cluster="prometheus-node1",instance="127.0.0.1:9090",job="prometheus",replica="0"}
+prometheus_tsdb_head_series{cluster="prometheus-node2",instance="127.0.0.1:9091",job="prometheus",replica="0"}
+prometheus_tsdb_head_series{cluster="prometheus-node1",instance="127.0.0.1:9091",job="prometheus",replica="1"}
+prometheus_tsdb_head_series{cluster="prometheus-node3",instance="127.0.0.1:9092",job="prometheus",replica="0"}
 prometheus_tsdb_head_series{cluster="us1",instance="127.0.0.1:9092",job="prometheus",replica="1"}
 ~~~
 
@@ -381,7 +381,7 @@ Então, como Thanos Querier sabe como desduplicar corretamente?
 
 Se olharmos novamente para a configuração do Querier, veremos que também definimos o `query.replica-labelsinalizador`. Este é exatamente o rótulo que o Consultor tentará desduplicar para os grupos de HA. Isso significa que qualquer métrica com exatamente os mesmos rótulos, exceto rótulo de réplica, será assumida como a métrica do mesmo grupo de HA e desduplicada de acordo.
 
-Se quisermos abrir o prometheus1_us1.ymlarquivo de configuração no editor ou se você for para **Prometheus 1 US1 / config** . você deve ver nossos rótulos externos na external_labelsopção YAML:
+Se quisermos abrir o prometheus-node1.yml arquivo de configuração no editor ou se você for para **Prometheus-node1 / config** . você deve ver nossos rótulos externos na external_labels opção YAML:
 ~~~yaml
  external_labels:
     cluster: us1
