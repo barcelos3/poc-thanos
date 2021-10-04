@@ -54,64 +54,58 @@ Execute os seguintes comandos:
 
 Prepare "volumes persistentes"
 ~~~bash
-mkdir -p prometheus0_eu1_data prometheus0_us1_data prometheus1_us1_data
+mkdir -p prometheus-node1.yml prometheus-node2.yml prometheus-node3.yml
 ~~~
 
 ## Implantando o primeiro Prometheus/eu
 ~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus0_eu1.yml:/etc/prometheus/prometheus.yml \
-    -v $(pwd)/prometheus0_eu1_data:/prometheus \
+docker run -d -p 0.0.0.0:9091:9091 --rm \
+    -v $(pwd)/prometheus-node1.yml:/etc/prometheus/prometheus.yml \
     -u root \
-    --name prometheus-0-eu1 \
-    quay.io/prometheus/prometheus:v2.14.0 \
+    --name prometheus-node1 \
+    quay.io/thanos/prometheus:v2.12.0-rc.0-rr-streaming \
     --config.file=/etc/prometheus/prometheus.yml \
     --storage.tsdb.path=/prometheus \
-    --web.listen-address=:9090 \
-    --web.external-url=https://2886795308-9090-cykoria04.environments.katacoda.com \
+    --web.listen-address=:9091 \
     --web.enable-lifecycle \
-    --web.enable-admin-api && echo "Prometheus EU1 started!"
+    --web.enable-admin-api && echo "Prometheus Node1 started"
 ~~~
 
 >**NOTA:** Estamos usando a imagem mais recente do Prometheus para que possamos tirar proveito do protocolo de leitura remota mais recente.
 ~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus0_us1.yml:/etc/prometheus/prometheus.yml \
-    -v $(pwd)/prometheus0_us1_data:/prometheus \
+docker run -d -p 0.0.0.0:9092:9092 --rm \
+    -v $(pwd)/prometheus-node2.yml:/etc/prometheus/prometheus.yml \
     -u root \
-    --name prometheus-0-us1 \
-    quay.io/prometheus/prometheus:v2.14.0 \
+    --name prometheus-node2 \
+    quay.io/thanos/prometheus:v2.12.0-rc.0-rr-streaming \
     --config.file=/etc/prometheus/prometheus.yml \
     --storage.tsdb.path=/prometheus \
-    --web.listen-address=:9091 \
-    --web.external-url=https://2886795308-9091-cykoria04.environments.katacoda.com \
+    --web.listen-address=:9092 \
     --web.enable-lifecycle \
-    --web.enable-admin-api && echo "Prometheus 0 US1 started!"
+    --web.enable-admin-api && echo "Prometheus Node2 started"
 ~~~
 
 Agora o último
 
 ~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus1_us1.yml:/etc/prometheus/prometheus.yml \
-    -v $(pwd)/prometheus1_us1_data:/prometheus \
+docker run -d -p 0.0.0.0:9093:9093 --rm \
+    -v $(pwd)/prometheus-node3.yml:/etc/prometheus/prometheus.yml \
     -u root \
-    --name prometheus-1-us1 \
-    quay.io/prometheus/prometheus:v2.14.0 \
+    --name prometheus-node3 \
+    quay.io/thanos/prometheus:v2.12.0-rc.0-rr-streaming \
     --config.file=/etc/prometheus/prometheus.yml \
     --storage.tsdb.path=/prometheus \
-    --web.listen-address=:9092 \
-    --web.external-url=https://2886795308-9092-cykoria04.environments.katacoda.com \
+    --web.listen-address=:9093 \
     --web.enable-lifecycle \
-    --web.enable-admin-api && echo "Prometheus 1 US1 started!"
+    --web.enable-admin-api && echo "Prometheus Node3 started"
 ~~~
 
 ## Verificação de configuração
 Uma vez iniciado, você deve ser capaz de alcançar todas as instâncias do Prometheus:
 
-- Prometheus-0 EU1 (Link endpoint)
-- Prometheus-1 US1 (Link endpoint)
-- Prometheus-2 US1 (Link endpoint)
+- Prometheus-node1 (Link endpoint)
+- Prometheus-node2 (Link endpoint)
+- Prometheus-node3 (Link endpoint)
 
 ## Informação adicional
 Por que alguém precisaria de várias instâncias do Prometheus?
@@ -123,7 +117,7 @@ Por que alguém precisaria de várias instâncias do Prometheus?
 
 Vamos tentar brincar um pouco com essa configuração. Você está livre para consultar qualquer métrica, no entanto, vamos tentar buscar algumas informações de nossa configuração de vários clusters: Quantas séries (métricas) coletamos em geral em todas as instâncias do Prometheus que temos?
 
-**Dica:** Procure prometheus_tsdb_head_seriesmétricas.
+**Dica:** Procure por `prometheus_tsdb_head_series`
 
 Excelente! Agora estamos executando 3 instâncias do Prometheus.
 
@@ -177,45 +171,50 @@ Para esta configuração, a única configuração necessária para o sidecar é 
 
 Clique nos trechos para adicionar sidecars a cada instância do Prometheus.
 
-## Adicionando sidecar ao Prometheus "EU1"
+## Adicionando sidecar ao Prometheus "node1"
 ~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus0_eu1.yml:/etc/prometheus/prometheus.yml \
-    --name prometheus-0-sidecar-eu1 \
+docker run -d -p 0.0.0.0:19091:19091 -p 0.0.0.0:19191:19191 --rm \
+    -v $(pwd)/prometheus-node1.yml:/etc/prometheus/prometheus.yml \
+    --link prometheus-node1:prometheus \
+    --name prometheus-sidecar-node1 \
     -u root \
-    quay.io/thanos/thanos:v0.22.0 \
-    sidecar \
-    --http-address 0.0.0.0:19090 \
-    --grpc-address 0.0.0.0:19190 \
-    --reloader.config-file /etc/prometheus/prometheus.yml \
-    --prometheus.url http://127.0.0.1:9090 && echo "Started sidecar for Prometheus 0 EU1"
-~~~
-
-## Adicionando sidecars a cada réplica do Prometheus em "US1"
-~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus0_us1.yml:/etc/prometheus/prometheus.yml \
-    --name prometheus-0-sidecar-us1 \
-    -u root \
-    quay.io/thanos/thanos:v0.22.0 \
+    quay.io/thanos/thanos:v0.7.0 \
     sidecar \
     --http-address 0.0.0.0:19091 \
     --grpc-address 0.0.0.0:19191 \
     --reloader.config-file /etc/prometheus/prometheus.yml \
-    --prometheus.url http://127.0.0.1:9091 && echo "Started sidecar for Prometheus 0 US1"
+    --prometheus.url http://prometheus:9091 && echo "Started sidecar for Prometheus Node1"
 ~~~
 
+## Adicionando sidecars a cada réplica do Prometheus em "node2"
 ~~~bash
-docker run -d --net=host --rm \
-    -v $(pwd)/prometheus1_us1.yml:/etc/prometheus/prometheus.yml \
-    --name prometheus-1-sidecar-us1 \
+docker run -d -p 0.0.0.0:19092:19092 -p 0.0.0.0:19192:19192 --rm \
+-v $(pwd)/prometheus-node2.yml:/etc/prometheus/prometheus.yml \
+--link prometheus-node2:prometheus \
+--name prometheus-sidecar-node2 \
+-u root \
+quay.io/thanos/thanos:v0.7.0 \
+sidecar \
+--http-address 0.0.0.0:19092 \
+--grpc-address 0.0.0.0:19192 \
+--reloader.config-file /etc/prometheus/prometheus.yml \
+--prometheus.url http://prometheus:9092 && echo "Started sidecar for Prometheus Node2"
+~~~
+
+## Por último Prometheus "node3"
+
+~~~bash
+docker run -d -p 0.0.0.0:19093:19093 -p 0.0.0.0:19193:19193 --rm \
+    -v $(pwd)/prometheus-node3.yml:/etc/prometheus/prometheus.yml \
+    --link prometheus-node3:prometheus \
+    --name prometheus-sidecar-node3 \
     -u root \
-    quay.io/thanos/thanos:v0.22.0 \
+    quay.io/thanos/thanos:v0.7.0 \
     sidecar \
-    --http-address 0.0.0.0:19092 \
-    --grpc-address 0.0.0.0:19192 \
+    --http-address 0.0.0.0:19093 \
+    --grpc-address 0.0.0.0:19193 \
     --reloader.config-file /etc/prometheus/prometheus.yml \
-    --prometheus.url http://127.0.0.1:9092 && echo "Started sidecar for Prometheus 1 US1"
+    --prometheus.url http://prometheus:9093 && echo "Started sidecar for Prometheus Node3"
 ~~~
 
 ## Verificação
@@ -223,58 +222,58 @@ Agora, para verificar se os sidecars estão funcionando bem, vamos modificar a c
 
 Observe que apenas graças ao sidecar, todas essas alterações serão imediatamente recarregadas e atualizadas no Prometheus!
 
-prometheus0.yaml
+**prometheus-node1.yml**
 ~~~yaml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: eu1
+    cluster: prometheus-node1
     replica: 0
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9090']
+      - targets: ['127.0.0.1:9091']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19090']
+      - targets: ['127.0.0.1:19091']
 ~~~
 
-prometheus1.yaml
+**prometheus-node2.yml**
 ~~~yaml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: us1
+    cluster: prometheus-node2
     replica: 0
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9091','127.0.0.1:9092']
+      - targets: ['127.0.0.1:9092']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19091','127.0.0.1:19092']
+      - targets: ['127.0.0.1:19092']
 ~~~
 
-prometheus2.yaml
+prometheus-node3.yaml
 ~~~yaml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: us1
+    cluster: prometheus-node3
     replica: 1
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9091','127.0.0.1:9092']
+      - targets: ['127.0.0.1:9093']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19091','127.0.0.1:19092']
+      - targets: ['127.0.0.1:19093']
 ~~~
 
 Agora você deve ver uma configuração nova e atualizada em cada Prometheus. Por exemplo, aqui em **Prometheus 0 EU1 / config** . Ao mesmo tempo, o **up** deve mostrar as job=sidecarmétricas.
