@@ -22,6 +22,19 @@ Alta disponibilidade de componentes, incluindo Prometheus.
  - Multi Cloud
  - Bucket Cloud
 
+
+## Componentes básicos
+ - `**Sidecars**` Leia os dados para consultar e carregue-os para o armazenamento em nuvem a partir das instâncias do Prometheus que vivem no mesmo pod ou nó.
+
+ - `**Store Gateway**` Fornece métricas dentro de um intervalo de armazenamento em nuvem, como S3 ou Google Cloud Storage (GCS).
+
+ - `**Querier**` implementa uma API de consulta do Prometheus para executar consultas globais por meio de várias instâncias do Prometheus e armazenamento de objetos de longo prazo.
+
+ - `**Ruler**` Realiza a gravação do Prometheus e regras de alerta sobre os dados usando o Querier.
+O Compactor usa um processo gradual de mesclar blocos de dados na nuvem para armazená-los e operá-los com eficiência.
+
+- `**Receiver**` Aceita dados do Prometheus por meio de um [remote_write API](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write). 
+
 ## Configuração inicial do Prometheus
 **Etapa 1** - Iniciar os servidores Prometheus iniciais
 Thanos foi feito para dimensionar e estender o Prometheus baunilha. Isso significa que você pode gradualmente, sem interrupção, implantar Thanos em cima de sua configuração existente do Prometheus.
