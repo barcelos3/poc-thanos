@@ -16,7 +16,7 @@ Alta disponibilidade de componentes, incluindo Prometheus.
 **Referências:**https://github.com/thanos-io/thanos
 
 ---
-# Raquisitos mínimos para POC
+# Requisitos mínimos para POC
  - Docker
  - Cluster Prometheus
  - Multi Cloud
@@ -52,12 +52,14 @@ Observe as sinalizações extras que estamos passando para Prometheus:
 --web.enable-lifecycle permite que o Thanos Sidecar recarregue os arquivos de configuração e regra do Prometheus, se usados.
 Execute os seguintes comandos:
 
-Prepare "volumes persistentes"
+Prepare **"volumes persistentes"** crie os seguintes arquivos:
 ~~~bash
 mkdir -p prometheus-node1.yml prometheus-node2.yml prometheus-node3.yml
 ~~~
 
-## Implantando o primeiro Prometheus/eu
+> Rode esses blocos de comandos para criar o cluster
+
+## Implantando o primeiro Prometheus "node1"
 ~~~bash
 docker run -d -p 0.0.0.0:9091:9091 --rm \
     -v $(pwd)/prometheus-node1.yml:/etc/prometheus/prometheus.yml \
@@ -189,16 +191,16 @@ docker run -d -p 0.0.0.0:19091:19091 -p 0.0.0.0:19191:19191 --rm \
 ## Adicionando sidecars a cada réplica do Prometheus em "node2"
 ~~~bash
 docker run -d -p 0.0.0.0:19092:19092 -p 0.0.0.0:19192:19192 --rm \
--v $(pwd)/prometheus-node2.yml:/etc/prometheus/prometheus.yml \
---link prometheus-node2:prometheus \
---name prometheus-sidecar-node2 \
--u root \
-quay.io/thanos/thanos:v0.7.0 \
-sidecar \
---http-address 0.0.0.0:19092 \
---grpc-address 0.0.0.0:19192 \
---reloader.config-file /etc/prometheus/prometheus.yml \
---prometheus.url http://prometheus:9092 && echo "Started sidecar for Prometheus Node2"
+    -v $(pwd)/prometheus-node2.yml:/etc/prometheus/prometheus.yml \
+    --link prometheus-node2:prometheus \
+    --name prometheus-sidecar-node2 \
+    -u root \
+    quay.io/thanos/thanos:v0.7.0 \
+    sidecar \
+    --http-address 0.0.0.0:19092 \
+    --grpc-address 0.0.0.0:19192 \
+    --reloader.config-file /etc/prometheus/prometheus.yml \
+    --prometheus.url http://prometheus:9092 && echo "Started sidecar for Prometheus Node2"
 ~~~
 
 ## Por último Prometheus "node3"
@@ -234,10 +236,10 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9091']
+      - targets: ['127.0.0.1:9091','127.0.0.1:9092','127.0.0.1:9093']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19091']
+      - targets: ['127.0.0.1:19091','127.0.0.1:19092','127.0.0.1:19093']
 ~~~
 
 **prometheus-node2.yml**
@@ -252,10 +254,10 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9092']
+      - targets: ['127.0.0.1:9091','127.0.0.1:9092','127.0.0.1:9093']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19092']
+      - targets: ['127.0.0.1:19091','127.0.0.1:19092','127.0.0.1:19093']
 ~~~
 
 prometheus-node3.yaml
@@ -270,15 +272,15 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9093']
+      - targets: ['127.0.0.1:9091','127.0.0.1:9092','127.0.0.1:9093']
   - job_name: 'sidecar'
     static_configs:
-      - targets: ['127.0.0.1:19093']
+      - targets: ['127.0.0.1:19091','127.0.0.1:19092','127.0.0.1:19093']
 ~~~
 
-Agora você deve ver uma configuração nova e atualizada em cada Prometheus. Por exemplo, aqui em **Prometheus 0 EU1 / config** . Ao mesmo tempo, o **up** deve mostrar as job=sidecarmétricas.
+Agora você deve ver uma configuração nova e atualizada em cada Prometheus. Por exemplo, aqui em **Prometheus-node1 / config** . Ao mesmo tempo, o **up** deve mostrar as job=sidecarmétricas.
 
-Como agora o Prometheus tem acesso a métricas secundárias , podemos consultar **thanos_sidecar_prometheus_up** para verificar se o arquivo secundário tem acesso ao Prometheus.
+Como agora o Prometheus tem acesso a métricas secundárias , podemos consultar **`thanos_sidecar_prometheus_up`** para verificar se o arquivo secundário tem acesso ao Prometheus.
 
 # Próximo
 Excelente! Agora você deve ter a configuração implantada como na imagem apresentada:
@@ -310,15 +312,18 @@ Vamos agora iniciar o componente Consulta. Como você deve se lembrar, o [**side
 
 Clique abaixo do snippet para iniciar o Query.
 ~~~bash
-docker run -d --net=host --rm \
-    --name querier \
-    quay.io/thanos/thanos:v0.22.0 \
+docker run -d -p 0.0.0.0:29090:29090 --rm \
+--name querier \
+--link prometheus-sidecar-node1:prometheus-sidecar-node1 \
+--link prometheus-sidecar-node2:prometheus-sidecar-node2 \
+--link prometheus-sidecar-node3:prometheus-sidecar-node3 \
+    quay.io/thanos/thanos:v0.7.0 \
     query \
     --http-address 0.0.0.0:29090 \
     --query.replica-label replica \
-    --store 127.0.0.1:19190 \
-    --store 127.0.0.1:19191 \
-    --store 127.0.0.1:19192 && echo "Started Thanos Querier"
+    --store prometheus-sidecar-node1:19191 \
+    --store prometheus-sidecar-node2:19192 \
+    --store prometheus-sidecar-node3:19193 && echo "Started Querier"
 ~~~
 
 O Thanos Querier expõe uma interface do usuário muito semelhante ao Prometheus, mas além de muitos StoreAPIs aos quais você deseja se conectar.
