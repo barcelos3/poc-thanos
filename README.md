@@ -24,16 +24,16 @@ Alta disponibilidade de componentes, incluindo Prometheus.
 
 
 ## Componentes básicos
- - `**Sidecars**` Leia os dados para consultar e carregue-os para o armazenamento em nuvem a partir das instâncias do Prometheus que vivem no mesmo pod ou nó.
+ - **`Sidecars`** Leia os dados para consultar e carregue-os para o armazenamento em nuvem a partir das instâncias do Prometheus que vivem no mesmo pod ou nó.
 
- - `**Store Gateway**` Fornece métricas dentro de um intervalo de armazenamento em nuvem, como S3 ou Google Cloud Storage (GCS).
+ - **`Store Gateway`** Fornece métricas dentro de um intervalo de armazenamento em nuvem, como S3 ou Google Cloud Storage (GCS).
 
- - `**Querier**` implementa uma API de consulta do Prometheus para executar consultas globais por meio de várias instâncias do Prometheus e armazenamento de objetos de longo prazo.
+ - **`Querier`** implementa uma API de consulta do Prometheus para executar consultas globais por meio de várias instâncias do Prometheus e armazenamento de objetos de longo prazo.
 
- - `**Ruler**` Realiza a gravação do Prometheus e regras de alerta sobre os dados usando o Querier.
+ - **`Ruler`** Realiza a gravação do Prometheus e regras de alerta sobre os dados usando o Querier.
 O Compactor usa um processo gradual de mesclar blocos de dados na nuvem para armazená-los e operá-los com eficiência.
 
-- `**Receiver**` Aceita dados do Prometheus por meio de um [remote_write API](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write). 
+- **`Receiver`** Aceita dados do Prometheus por meio de um [remote_write API](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write). 
 
 ## Configuração inicial do Prometheus
 **Etapa 1** - Iniciar os servidores Prometheus iniciais
@@ -61,8 +61,8 @@ Vamos agora iniciar três contêineres que representam nossas três instâncias 
 
 Observe as sinalizações extras que estamos passando para Prometheus:
 
---web.enable-admin-apipermite que Thanos Sidecar obtenha metadados de Prometheus como external labels.
---web.enable-lifecycle permite que o Thanos Sidecar recarregue os arquivos de configuração e regra do Prometheus, se usados.
+`--web.enable-admin-api` permite que **Thanos Sidecar** obtenha metadados de Prometheus como external labels.
+`--web.enable-lifecycle` permite que o **Thanos Sidecar** recarregue os arquivos de configuração e regra do Prometheus, se usados.
 Execute os seguintes comandos:
 
 Prepare **"volumes persistentes"** crie os seguintes arquivos:
